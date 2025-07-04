@@ -1,10 +1,16 @@
 use std::{
     ffi::NulError,
     fmt::Error,
-    ops::{Index, IndexMut},
+    ops::{Index, IndexMut, Mul},
     str::Utf8Error,
 };
 
+use crate::{
+    NVector,
+    narray::{errors::NErrors, vector::NVector},
+};
+
+#[derive(Debug)]
 pub struct NMatrix {
     data: Vec<f32>,
     rows: usize,
@@ -58,6 +64,33 @@ impl NMatrix {
     }
 }
 
+impl Mul for NMatrix {
+    type Output = Result<NMatrix, NErrors>;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        let mut res: Vec<f32> = vec![];
+        if self.rows != rhs.cols {
+            return Err(NErrors::TypeError);
+        }
+        // take each as vector
+        self.by_iter(NMatrixAxis::ROW).for_each(|m1_row| {
+            let v1: NVector = NVector!(m1_row);
+            rhs.by_iter(NMatrixAxis::COL).for_each(|m2_col| {
+                let v2 = NVector!(m2_col);
+                res.push(v1.dot(&v2));
+            });
+        });
+
+        Ok(NMatrix::new_init(self.rows, self.cols, res))
+    }
+}
+
+impl PartialEq for NMatrix {
+    fn eq(&self, other: &Self) -> bool {
+        self.data == other.data
+    }
+}
+
 impl Index<usize> for NMatrix {
     type Output = [f32];
 
@@ -81,7 +114,7 @@ impl<'a> Iterator for NMatrixAxisIter<'a> {
                 let current = self.index;
                 // take each rows
                 let cols = self.matrix.cols;
-                if self.matrix.cols >= current {
+                if self.matrix.cols <= current {
                     return None;
                 }
                 let curr_vec = self
@@ -98,7 +131,7 @@ impl<'a> Iterator for NMatrixAxisIter<'a> {
             }
             NMatrixAxis::ROW => {
                 let cols = self.matrix.cols;
-                if self.matrix.rows >= self.index {
+                if self.matrix.rows <= self.index {
                     return None;
                 }
                 // fix: why map again?
@@ -144,5 +177,15 @@ mod test {
             assert_eq!(a_row, rows[curr], "Failed comparing rowize");
             curr += 1;
         });
+    }
+
+    #[test]
+    fn test_matrix_mul() {
+        let m1 = NMatrix![2, 2; 1., 2., 3., 4.];
+        let m2 = NMatrix![2, 2; 1., 2., 3., 4.];
+
+        let mr = (m1 * m2).unwrap();
+        let mx = NMatrix![2, 2; 7., 10., 15., 22.];
+        assert_eq!(mr, mx);
     }
 }
