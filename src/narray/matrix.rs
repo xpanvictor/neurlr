@@ -1,12 +1,12 @@
 use std::{
     ffi::NulError,
     fmt::Error,
-    ops::{Index, IndexMut, Mul},
+    ops::{Add, Index, IndexMut, Mul, Sub},
     str::Utf8Error,
 };
 
 use crate::{
-    NVector,
+    NMatrix, NVector,
     narray::{errors::NErrors, vector::NVector},
 };
 
@@ -47,6 +47,30 @@ impl NMatrix {
         m
     }
 
+    pub fn compare_dimensions(&self, rhs: &NMatrix) -> bool {
+        let NMatrix {
+            cols: l_cols,
+            rows: l_rows,
+            ..
+        } = self;
+        let NMatrix {
+            cols: r_cols,
+            rows: r_rows,
+            ..
+        } = rhs;
+
+        l_cols == r_cols && l_rows == r_rows
+    }
+
+    pub fn transpose(&self) -> NMatrix {
+        let mut res = Vec::new();
+        self.by_iter(NMatrixAxis::COL).for_each(|col| {
+            res.extend(col);
+        });
+        // exchange cols & rows
+        NMatrix::new_init(self.cols, self.rows, res)
+    }
+
     pub fn set(&mut self, row: usize, col: usize, val: f32) -> Result<(), Error> {
         if self.rows - 1 < row || self.cols - 1 < col {
             todo!()
@@ -81,6 +105,44 @@ impl Mul for NMatrix {
             });
         });
 
+        Ok(NMatrix::new_init(self.rows, self.cols, res))
+    }
+}
+
+/// Scalar multiplication
+impl Mul<isize> for NMatrix {
+    type Output = Result<NMatrix, NErrors>;
+
+    fn mul(self, rhs: isize) -> Self::Output {
+        let res = self.data.iter().map(|a| a * rhs as f32).collect();
+        Ok(NMatrix::new_init(self.rows, self.cols, res))
+    }
+}
+
+/// Addition
+impl Add for NMatrix {
+    type Output = Result<NMatrix, NErrors>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        if !self.compare_dimensions(&rhs) {
+            return Err(NErrors::DimensionError);
+        };
+
+        let res = self.data.iter().zip(rhs.data).map(|(a, b)| a + b).collect();
+        Ok(NMatrix::new_init(self.rows, self.cols, res))
+    }
+}
+
+/// Substraction
+impl Sub for NMatrix {
+    type Output = Result<NMatrix, NErrors>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        if !self.compare_dimensions(&rhs) {
+            return Err(NErrors::DimensionError);
+        };
+
+        let res = self.data.iter().zip(rhs.data).map(|(a, b)| a - b).collect();
         Ok(NMatrix::new_init(self.rows, self.cols, res))
     }
 }
@@ -187,5 +249,17 @@ mod test {
         let mr = (m1 * m2).unwrap();
         let mx = NMatrix![2, 2; 7., 10., 15., 22.];
         assert_eq!(mr, mx);
+    }
+
+    #[test]
+    fn test_transpose() {
+        let m1 = NMatrix![3, 2; 1., 2., 3., 4., 5., 6.];
+        let mx = NMatrix![2, 2; 1., 3., 5., 2., 4., 6.];
+        let mr = m1.transpose();
+
+        assert_eq!(mr.cols, m1.rows);
+        assert_eq!(mr.rows, m1.cols);
+
+        assert_eq!(m1.transpose(), mx);
     }
 }
