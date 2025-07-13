@@ -17,7 +17,9 @@ impl Mul<NVector> for NMatrix {
         let mut res = vec![];
         self.by_iter(matrix::NMatrixAxis::ROW).for_each(|raw_row| {
             let row = NVector!(raw_row);
-            res.push(row.dot(&rhs));
+            if let Ok(vdot) = row.dot(&rhs) {
+                res.push(vdot);
+            }
         });
 
         NVector!(res)

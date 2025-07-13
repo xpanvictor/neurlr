@@ -101,7 +101,11 @@ impl Mul for NMatrix {
             let v1: NVector = NVector!(m1_row);
             rhs.by_iter(NMatrixAxis::COL).for_each(|m2_col| {
                 let v2 = NVector!(m2_col);
-                res.push(v1.dot(&v2));
+                if let Ok(vdot) = v1.dot(&v2) {
+                    res.push(vdot);
+                } else {
+                    panic!("I'll look at this later")
+                }
             });
         });
 
