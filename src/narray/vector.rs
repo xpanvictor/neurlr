@@ -1,6 +1,8 @@
-use crate::narray::errors::NErrors;
+use std::ops::Add;
 
-#[derive(Debug)]
+use crate::narray::{errors::NErrors, matrix::NMatrix};
+
+#[derive(Debug, Clone)]
 pub struct NVector {
     pub data: Vec<f32>,
     pub len: usize,
@@ -40,5 +42,21 @@ impl NVector {
             .zip(other.data.iter())
             .map(|(a, b)| a * b)
             .sum())
+    }
+}
+
+impl Add<&NVector> for NVector {
+    type Output = Result<NVector, NErrors>;
+    fn add(self, rhs: &Self) -> Self::Output {
+        if self.len != rhs.len {
+            return Err(NErrors::DimensionError);
+        }
+        let val = self
+            .data
+            .iter()
+            .zip(rhs.data.clone())
+            .map(|(a, b)| a + b)
+            .collect();
+        Ok(NVector::new_init(val))
     }
 }
