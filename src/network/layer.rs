@@ -1,15 +1,19 @@
+use std::fmt::Debug;
+
 use crate::{
     NMatrix,
     narray::{self, errors::NErrors, matrix::NMatrix, vector::NVector},
 };
 use rand::{distributions::Normal, prelude::Distribution};
 
+#[derive(Debug)]
 pub enum ActivationFn {
     ReLU,
     SoftMax,
     Sigmoid,
 }
 
+#[derive(Debug)]
 pub struct Layer {
     input_size: usize,
     output_size: usize,
@@ -55,7 +59,19 @@ impl Layer {
     }
 
     fn activate(&self, z: &NVector) -> NVector {
-        todo!()
+        match self.activation_fn {
+            ActivationFn::ReLU => Self::relu(z),
+            _ => todo!(),
+        }
+    }
+
+    fn relu(z: &NVector) -> NVector {
+        let act_data = z
+            .data
+            .iter()
+            .map(|a| if a > &0. { a.clone() } else { 0. })
+            .collect();
+        NVector::new_init(act_data)
     }
 
     pub fn forward(&mut self, input: &NVector) -> Result<NVector, NErrors> {
