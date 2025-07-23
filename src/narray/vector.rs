@@ -28,8 +28,12 @@ impl NVector {
         self.data.get(i).copied()
     }
 
-    pub fn set(&mut self, i: usize, value: usize) -> Result<(), NErrors> {
-        todo!()
+    pub fn set(&mut self, i: usize, value: f32) -> Result<(), NErrors> {
+        if self.len <= i {
+            return Err(NErrors::DimensionError);
+        }
+        self.data[i] = value;
+        Ok(())
     }
 
     pub fn dot(&self, other: &NVector) -> Result<f32, NErrors> {
