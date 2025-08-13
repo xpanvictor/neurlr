@@ -1,4 +1,7 @@
-use std::ops::Add;
+use std::{
+    cmp::Reverse,
+    ops::{Add, Div},
+};
 
 use crate::narray::{errors::NErrors, matrix::NMatrix};
 
