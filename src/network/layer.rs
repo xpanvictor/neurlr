@@ -18,8 +18,8 @@ pub struct Layer {
     input_size: usize,
     output_size: usize,
     // size -> o_s * i_s
-    weight: NMatrix,
-    biases: NVector,
+    pub weight: NMatrix,
+    pub biases: NVector,
     activation_fn: ActivationFn,
     cache_z: NVector,
     cache_input: NVector,
@@ -87,5 +87,11 @@ impl Layer {
         self.cache_output = a.clone();
         // ret
         Ok(a)
+    }
+
+    pub fn update(&mut self, weight: NMatrix, bias: NVector) -> Result<(), NErrors> {
+        self.weight = weight;
+        self.biases = bias;
+        Ok(())
     }
 }

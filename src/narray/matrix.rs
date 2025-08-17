@@ -114,12 +114,21 @@ impl Mul for NMatrix {
 }
 
 /// Scalar multiplication
+type Operand = f32;
 impl Mul<isize> for NMatrix {
     type Output = Result<NMatrix, NErrors>;
 
     fn mul(self, rhs: isize) -> Self::Output {
         let res = self.data.iter().map(|a| a * rhs as f32).collect();
         Ok(NMatrix::new_init(self.rows, self.cols, res))
+    }
+}
+impl<'a> Mul<&'a f32> for &'a NMatrix {
+    type Output = NMatrix; 
+
+    fn mul(self, rhs: &'a f32) -> Self::Output {
+        let res = self.data.iter().map(|a| a * rhs as &f32).collect();
+        NMatrix::new_init(self.rows, self.cols, res)
     }
 }
 
@@ -147,6 +156,19 @@ impl Sub for NMatrix {
         };
 
         let res = self.data.iter().zip(rhs.data).map(|(a, b)| a - b).collect();
+        Ok(NMatrix::new_init(self.rows, self.cols, res))
+    }
+}
+
+impl<'a> Sub for &'a NMatrix {
+    type Output = Result<NMatrix, NErrors>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        if !self.compare_dimensions(&rhs) {
+            return Err(NErrors::DimensionError);
+        };
+
+        let res = self.data.iter().zip(rhs.data.iter()).map(|(a, b)| a - b).collect();
         Ok(NMatrix::new_init(self.rows, self.cols, res))
     }
 }

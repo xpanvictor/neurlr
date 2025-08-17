@@ -1,6 +1,6 @@
 use std::{
     cmp::Reverse,
-    ops::{Add, Div},
+    ops::{Add, Sub, Mul},
 };
 
 use crate::narray::{errors::NErrors, matrix::NMatrix};
@@ -50,6 +50,16 @@ impl NVector {
             .map(|(a, b)| a * b)
             .sum())
     }
+
+    pub fn hadamard(&self, other: &NVector) -> Result<NVector, NErrors> {
+        let hadamard_vector = self
+                .data
+                .iter()
+                .zip(other.data.iter())
+                .map(|(a, b)| {a * b})
+                .collect::<Vec<f32>>();
+        Ok(NVector::new_init(hadamard_vector))
+    }
 }
 
 impl Add<&NVector> for NVector {
@@ -65,5 +75,21 @@ impl Add<&NVector> for NVector {
             .map(|(a, b)| a + b)
             .collect();
         Ok(NVector::new_init(val))
+    }
+}
+
+impl Mul<&f32> for &NVector {
+    type Output = Result<NVector, NErrors>;
+    fn mul(self, rhs: &f32) -> Self::Output {
+        let vals = self.data.iter().map(|x| x * rhs).collect::<Vec<f32>>();
+        Ok(NVector::new_init(vals))
+    }
+}
+
+impl Sub<&NVector> for &NVector {
+    type Output = Result<NVector, NErrors>;
+    fn sub(self, rhs: &NVector) -> Self::Output {
+        let vals = self.data.iter().zip(rhs.data.iter()).map(|(x, y)| x - y).collect();
+        Ok(NVector::new_init(vals))
     }
 }
