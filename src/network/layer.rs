@@ -24,6 +24,7 @@ pub struct Layer {
     cache_z: NVector,
     cache_input: NVector,
     cache_output: NVector,
+    cache_error: NVector,
 }
 
 impl Layer {
@@ -37,6 +38,7 @@ impl Layer {
             cache_input: NVector::new(o_s),
             cache_z: NVector::new(o_s),
             cache_output: NVector::new(o_s),
+            cache_error: NVector::new(o_s),
         }
     }
 
@@ -65,6 +67,13 @@ impl Layer {
         }
     }
 
+    fn prime_activate(&self, z: &NVector) -> NVector {
+        match self.activation_fn {
+            ActivationFn::ReLU => todo!(),
+            _ => todo!()
+        }
+    }
+
     fn relu(z: &NVector) -> NVector {
         let act_data = z
             .data
@@ -87,6 +96,25 @@ impl Layer {
         self.cache_output = a.clone();
         // ret
         Ok(a)
+    }
+
+    fn cost_gradient(activated_output: &NVector, expected_output: &NVector) -> NVector {
+        (activated_output - expected_output).unwrap()
+    }
+
+    pub fn back_propagrate(&mut self, expected_output: &NVector, _my_error: Option<&NVector>) -> NVector {
+        let prime_activated_input = self.prime_activate(&self.cache_input);
+        let my_error = if _my_error.is_some() {_my_error.unwrap()} else {
+            // compute my error, I'm last level
+            // using the available cost fn
+            let grad_cost = Self::cost_gradient(&self.cache_output, expected_output);
+            // return error -> grad hadamard relu'(input)
+            self.cache_error = (grad_cost.hadamard(&prime_activated_input)).unwrap();
+            &self.cache_error
+        };
+        
+        // prev_layer_error -> (my_weight * my_error) hadamard my_prime_activated_input
+        (&self.weight * my_error).hadamard(&prime_activated_input).unwrap()
     }
 
     pub fn update(&mut self, weight: NMatrix, bias: NVector) -> Result<(), NErrors> {

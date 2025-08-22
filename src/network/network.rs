@@ -1,6 +1,6 @@
 use crate::{
     narray::{errors::NErrors, matrix::NMatrix, vector::NVector},
-    network::layer::Layer, NVector,
+    network::layer::{self, Layer}, NVector,
 };
 
 pub struct Network {
@@ -55,7 +55,15 @@ impl Network {
     }
 
     // blackbox back propagation
-    fn back_propagrate(&self, x: &NVector, y: &NVector) -> (NMatrix, NVector) {
+    fn back_propagrate(&mut self, x: &NVector, y: &NVector) -> (NMatrix, NVector) {
+        // feed forward the layers
+        let mut z_f = x.clone();
+        for layer in self.layers.iter_mut() {
+            z_f = layer.forward(&z_f).unwrap();
+        }
+        for layer in self.layers.iter_mut().rev() {
+            // back propagate errors
+        }
         todo!()
     }
 }
